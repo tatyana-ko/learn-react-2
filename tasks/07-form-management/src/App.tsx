@@ -1,9 +1,9 @@
-import { SmartForm } from './components/Form/SmartForm'
+import { SmartForm } from './components/Form/SmartForm';
 
 function App() {
   return (
     <div className="container">
-      <h1>Smart Form Management</h1>
+      <h2>Smart Form Management</h2>
       <SmartForm />
     </div>
   )
