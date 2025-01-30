@@ -18,7 +18,20 @@ export const FilterPanel = memo(({ filters, onFilterChange }: Props) => {
 
   return (
     <div>
-      {/* TODO: Реализовать панель фильтров */}
+      <select name="category" id="category">
+        <option value="category1">Category-1</option>
+        <option value="category2">Category-2</option>
+        <option value="category3">Category-3</option>
+      </select>
+
+      <div>
+        <label>Start:
+          <input type="date" name="date-end" id="date-start" />
+        </label>
+        <label>End:
+          <input type="date" name="date-end" id="date-end" />
+        </label>
+      </div>
     </div>
   );
 });

@@ -41,3 +41,31 @@ export function useAsync<T>() {
     cancel: () => {}
   };
 }
+
+//=========================
+
+// import { useState } from 'react';
+
+// export function useAsync<T>() {
+//   const [state, setState] = useState({
+//     data: null,
+//     error: null,
+//     isLoading: false
+//   });
+
+//   const execute = async (asyncFunction: () => Promise<T>) => {
+//     setState({ data: null, error: null, isLoading: true });
+//     try {
+//       const result = await asyncFunction();
+//       setState({ data: result, error: null, isLoading: false });
+//     } catch (error) {
+//       setState({ data: null, error, isLoading: false });
+//     }
+//   };
+
+//   const cancel = () => {
+//     setState({ data: null, error: null, isLoading: false });
+//   };
+
+//   return { ...state, execute, cancel };
+// }

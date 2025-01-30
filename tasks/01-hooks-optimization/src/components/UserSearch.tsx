@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import type { User, SearchState } from '../types';
 
-// TODO: Студент должен реализовать компонент поиска пользователей
 export const UserSearch: React.FC = () => {
   const [state, setState] = useState<SearchState>({
     query: '',
@@ -11,16 +10,32 @@ export const UserSearch: React.FC = () => {
   });
 
   useEffect(() => {
-    // TODO: Реализовать поиск пользователей
-    // 1. Создать AbortController
-    // 2. Выполнить fetch запрос
-    // 3. Обработать результат
-    // 4. Не забыть про очистку
+    const controller = new AbortController();
+    const { signal } = controller;
+
+    const fetchUser = async () => {
+      setState(prevState => ({ ...prevState, loading: true }));
+
+      try {
+        const response = await fetch("https:// ...", { signal });
+        const data = await response.json();
+        setState(prevState => ({ ...prevState, results: data, loading: false }))
+      } catch (error) {
+        if (error.name !== "AbortError") {
+          console.log(error);
+          setState(prevState => ({ ...prevState, error: "Request error", loading: false }))
+        }
+      }
+    };
+
+    if(state.query) {
+      fetchUser()
+    }
 
     return () => {
-      // TODO: Реализовать очистку
+      controller.abort();
     };
-  }, [/* TODO: Добавить зависимости */]);
+  }, [state.query]);
 
   return (
     <div>
@@ -30,12 +45,12 @@ export const UserSearch: React.FC = () => {
         onChange={(e) => setState(prev => ({ ...prev, query: e.target.value }))}
         placeholder="Поиск пользователей..."
       />
-      
+
       {state.loading && <div>Загрузка...</div>}
       {state.error && <div>Ошибка: {state.error}</div>}
-      
+
       <ul>
-        {state.results.map(user => (
+        {state.results.map((user: User) => (
           <li key={user.id}>{user.name} ({user.email})</li>
         ))}
       </ul>

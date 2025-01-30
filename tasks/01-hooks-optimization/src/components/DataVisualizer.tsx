@@ -23,3 +23,39 @@ export const DataVisualizer = memo(({ data, view }: Props) => {
     </div>
   );
 });
+
+
+//=================================
+
+// import React, { memo } from 'react';
+
+// export const DataVisualizer = memo(({ data, view }) => {
+//   return (
+//     <div>
+//       {view === 'table' ? (
+//         <table>
+//           <thead>
+//             <tr>
+//               <th>ID</th>
+//               <th>Название</th>
+//               <th>Цена</th>
+//             </tr>
+//           </thead>
+//           <tbody>
+//             {data.map((item) => (
+//               <tr key={item.id}>
+//                 <td>{item.id}</td>
+//                 <td>{item.name}</td>
+//                 <td>{item.price}</td>
+//               </tr>
+//             ))}
+//           </tbody>
+//         </table>
+//       ) : (
+//         <div>
+//           {/* Графическое представление данных */}
+//         </div>
+//       )}
+//     </div>
+//   );
+// });
