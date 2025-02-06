@@ -1,120 +1,122 @@
-import { useReducer, useCallback } from 'react';
-import type { ChatState, ChatAction, Message } from '../types';
+import { useReducer, useCallback, useState } from "react";
+import type { ChatState, ChatAction, Message } from "../types";
 
-/**
- * Хук для управления состоянием чата
- * 
- * Подумайте:
- * 1. Как организовать загрузку сообщений?
- * 2. Где хранить состояние загрузки?
- * 3. Как обновлять сообщения эффективно?
- */
+const usersObj = [
+  { id: "userId 1", name: "First User" },
+  { id: "userId 2", name: "Second User" },
+];
+
 const initialState: ChatState = {
   messages: [],
   users: {},
   hasMore: true,
   loading: false,
-  error: null
+  error: null,
 };
 
-/**
- * Редьюсер чата
- * 
- * Изучите:
- * 1. Как работает useReducer?
- * 2. Когда использовать иммутабельное обновление?
- * 3. Как типизировать actions?
- */
 function chatReducer(state: ChatState, action: ChatAction): ChatState {
   switch (action.type) {
-    case 'MESSAGES_LOADING':
+    case "MESSAGES_LOADING":
       return {
         ...state,
         loading: true,
-        error: null
+        error: null,
       };
 
-    case 'MESSAGES_LOADED':
+    case "MESSAGES_LOADED":
       return {
         ...state,
-        messages: [...action.payload.messages, ...state.messages],
+        messages: [...state.messages, ...action.payload.messages],
         users: {
           ...state.users,
-          ...action.payload.users.reduce((acc, user) => ({
-            ...acc,
-            [user.id]: user
-          }), {})
+          ...action.payload.users.reduce(
+            (acc, user) => ({
+              ...acc,
+              [user.id]: user,
+            }),
+            {}
+          ),
         },
         loading: false,
-        hasMore: action.payload.messages.length > 0
+        hasMore: action.payload.messages.length > 0,
       };
 
-    case 'MESSAGES_ERROR':
+    case "MESSAGES_ERROR":
       return {
         ...state,
         loading: false,
-        error: action.payload
+        hasMore: false,
+        error: action.payload,
       };
 
-    case 'MESSAGE_RECEIVED':
+    case "MESSAGE_RECEIVED":
       return {
         ...state,
-        messages: [...state.messages, action.payload]
+        messages: [...state.messages, action.payload],
       };
 
-    case 'MESSAGE_STATUS_UPDATED':
+    case "MESSAGE_STATUS_UPDATED":
       return {
         ...state,
-        messages: state.messages.map(message =>
+        messages: state.messages.map((message) =>
           message.id === action.payload.id
             ? { ...message, status: action.payload.status }
             : message
-        )
+        ),
       };
 
     default:
       return state;
   }
 }
-
-/**
- * Кастомный хук для работы с чатом
- * 
- * Подумайте:
- * 1. Какие операции нужно мемоизировать?
- * 2. Как обрабатывать ошибки?
- * 3. Как организовать пагинацию?
- */
 export function useChat() {
   const [state, dispatch] = useReducer(chatReducer, initialState);
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [isFetching, setIsFetching] = useState<boolean>(false);
 
-  /**
-   * Загрузка сообщений
-   * 
-   * Изучите:
-   * 1. Как работает пагинация?
-   * 2. Когда делать запросы?
-   * 3. Как обрабатывать ошибки сети?
-   */
   const loadMessages = useCallback(async () => {
-    // Подумайте: как реализовать загрузку с сервера?
-  }, [state.lastMessageId]);
+    if (state.loading || !state.hasMore || isFetching) {
+      return;
+    }
 
-  /**
-   * Обновление статуса сообщения
-   * 
-   * Подумайте:
-   * 1. Когда обновлять статус?
-   * 2. Как обеспечить оптимистичное обновление?
-   * 3. Как обрабатывать ошибки обновления?
-   */
-  const updateMessageStatus = useCallback((messageId: string, status: Message['status']) => {
-    // Изучите: как работает оптимистичное обновление?
-  }, []);
+    setIsFetching(true);
+    dispatch({ type: "MESSAGES_LOADING" });
+
+    try {
+      const response = await fetch(
+        `https://67a0cac55bcfff4fabe0a4cb.mockapi.io/api/messages?page=${currentPage}&limit=10`
+      );
+      const data = await response.json();
+
+      if (data.length === 0) {
+        dispatch({ type: "MESSAGES_ERROR", payload: "No more messages" });
+      } else {
+        dispatch({
+          type: "MESSAGES_LOADED",
+          payload: { messages: data, users: usersObj },
+        });
+        setCurrentPage((prevPage) => prevPage + 1);
+      }
+    } catch (error) {
+      dispatch({ type: "MESSAGES_ERROR", payload: "Something went wrong" });
+    } finally {
+      setIsFetching(false);
+    }
+  }, [currentPage, isFetching, state.hasMore, state.loading]);
+
+  const updateMessageStatus = useCallback(
+    (messageId: string, status: Message["status"]) => {
+      dispatch({
+        type: "MESSAGE_STATUS_UPDATED",
+        payload: { id: messageId, status },
+      });
+    },
+    []
+  );
 
   return {
     ...state,
     loadMessages,
-    updateMessageStatus
+    updateMessageStatus,
   };
 }

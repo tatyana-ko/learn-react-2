@@ -1,12 +1,3 @@
-/**
- * Типы данных для чата
- * 
- * Подумайте:
- * 1. Какие поля необходимы для группировки сообщений?
- * 2. Как типизировать разные виды сообщений?
- * 3. Какие данные нужны для оптимизации?
- */
-
 export interface Message {
   id: string;
   text: string;
@@ -21,12 +12,6 @@ export interface User {
   avatar?: string;
 }
 
-/**
- * Изучите:
- * 1. Как типизировать состояние загрузки?
- * 2. Как организовать пагинацию?
- * 3. Как хранить кеш сообщений?
- */
 export interface ChatState {
   messages: Message[];
   users: Record<string, User>;
@@ -36,12 +21,6 @@ export interface ChatState {
   lastMessageId?: string;
 }
 
-/**
- * Подумайте:
- * 1. Какие события могут происходить в чате?
- * 2. Как типизировать обработчики событий?
- * 3. Как обеспечить type safety для редьюсера?
- */
 export type ChatAction =
   | { type: 'MESSAGES_LOADING' }
   | { type: 'MESSAGES_LOADED'; payload: { messages: Message[]; users: User[] } }

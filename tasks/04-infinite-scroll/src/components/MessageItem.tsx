@@ -8,35 +8,10 @@ interface Props {
   style: React.CSSProperties;
 }
 
-/**
- * Компонент отдельного сообщения
- * 
- * Подумайте:
- * 1. Когда использовать memo?
- * 2. Какие props могут меняться?
- * 3. Как оптимизировать форматирование даты?
- */
 export const MessageItem: React.FC<Props> = memo(({ message, user, style }) => {
-  /**
-   * Форматирование времени сообщения
-   * 
-   * Изучите:
-   * 1. Как работает мемоизация функций?
-   * 2. Когда форматировать дату?
-   * 3. Как обрабатывать разные часовые пояса?
-   */
   const formattedTime = format(message.timestamp, 'HH:mm');
 
-  /**
-   * Рендер статуса сообщения
-   * 
-   * Подумайте:
-   * 1. Как показывать разные статусы?
-   * 2. Когда обновлять статус?
-   * 3. Как анимировать изменения?
-   */
   const renderStatus = () => {
-    // Изучите: как работают условные стили?
     switch (message.status) {
       case 'sent':
         return '✓';
@@ -51,12 +26,6 @@ export const MessageItem: React.FC<Props> = memo(({ message, user, style }) => {
 
   return (
     <div className="message-item" style={style}>
-      {/* 
-        Подумайте:
-        1. Как организовать семантическую верстку?
-        2. Как сделать сообщения доступными?
-        3. Как стилизовать разные типы сообщений?
-      */}
       <div className="message-avatar">
         {user.avatar ? (
           <img src={user.avatar} alt={user.name} />
@@ -83,7 +52,7 @@ export const MessageItem: React.FC<Props> = memo(({ message, user, style }) => {
     </div>
   );
 }, (prevProps, nextProps) => {
-  // Изучите: как работает сравнение props в memo?
+ 
   return (
     prevProps.message.id === nextProps.message.id &&
     prevProps.message.status === nextProps.message.status &&

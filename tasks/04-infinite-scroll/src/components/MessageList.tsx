@@ -1,4 +1,4 @@
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useLayoutEffect, useRef, useState } from 'react';
 import { FixedSizeList as List } from 'react-window';
 import { Message, User } from '../types';
 import { MessageItem } from './MessageItem';
@@ -11,14 +11,6 @@ interface Props {
   onLoadMore: () => void;
 }
 
-/**
- * Компонент списка сообщений с виртуализацией
- * 
- * Подумайте:
- * 1. Как оптимизировать рендеринг списка?
- * 2. Когда загружать новые сообщения?
- * 3. Как сохранять позицию скролла?
- */
 export const MessageList: React.FC<Props> = ({
   messages,
   users,
@@ -30,40 +22,36 @@ export const MessageList: React.FC<Props> = ({
   const observerRef = useRef<IntersectionObserver>();
   const [scrollDirection, setScrollDirection] = useState<'up' | 'down'>('down');
 
-  /**
-   * Обработчик скролла
-   * 
-   * Подумайте:
-   * 1. Как определить направление скролла?
-   * 2. Когда запрашивать новые данные?
-   * 3. Как избежать лишних запросов?
-   */
   const handleScroll = useCallback(({ scrollOffset, scrollDirection }) => {
-    // Изучите: как работает виртуализация списков?
-  }, [hasMore, loading, onLoadMore]);
+    if (scrollDirection === "backward") {
+      setScrollDirection("up");
+      return;
+    }
 
-  /**
-   * Настройка Intersection Observer
-   * 
-   * Изучите:
-   * 1. Как работает Intersection Observer API?
-   * 2. Какие настройки влияют на производительность?
-   * 3. Когда очищать observer?
-   */
+    if (scrollOffset === 0) {
+      onLoadMore();
+    }
+
+    setScrollDirection("down");
+  }, [onLoadMore]);
+
   const setUpObserver = useCallback((element: HTMLElement | null) => {
-    // Подумайте: как обрабатывать пересечение элементов?
-  }, [hasMore, loading, onLoadMore]);
+    if (observerRef.current) {
+      observerRef.current.disconnect();
+    }
 
-  /**
-   * Рендер элемента списка
-   * 
-   * Подумайте:
-   * 1. Когда мемоизировать рендер?
-   * 2. Какие props передавать в MessageItem?
-   * 3. Как группировать сообщения по дате?
-   */
+    observerRef.current = new IntersectionObserver((entries) => {
+      if (entries[0].isIntersecting && hasMore && !loading && scrollDirection === "down") {
+        onLoadMore();
+      }
+    });
+
+    if (element) {
+      observerRef.current.observe(element);
+    }
+  }, [hasMore, loading, onLoadMore, scrollDirection]);
+
   const renderMessage = useCallback(({ index, style }) => {
-    // Изучите: как работает React.memo?
     const message = messages[index];
     const user = users[message.userId];
 
@@ -77,14 +65,24 @@ export const MessageList: React.FC<Props> = ({
     );
   }, [messages, users]);
 
+  useLayoutEffect(() => {
+    if(!hasMore) {
+      return;
+    }
+
+    const item = document.querySelector(".message-item:last-child") as HTMLElement;
+
+    if (item) {
+      setUpObserver(item);
+    }
+
+    return () => {
+      observerRef.current?.disconnect();
+    }
+  }, [hasMore, messages, setUpObserver])
+
   return (
     <div className="message-list">
-      {/* 
-        Подумайте:
-        1. Как рассчитать размеры списка?
-        2. Как обрабатывать изменение размера окна?
-        3. Как оптимизировать прокрутку?
-      */}
       <List
         ref={listRef}
         height={600}
@@ -104,3 +102,4 @@ export const MessageList: React.FC<Props> = ({
     </div>
   );
 };
+

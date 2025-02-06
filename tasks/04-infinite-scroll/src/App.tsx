@@ -1,15 +1,8 @@
+import React from 'react';
 import { useChat } from './hooks/useChat';
 import { MessageList } from './components/MessageList';
 import './App.css';
 
-/**
- * Главный компонент приложения
- * 
- * Подумайте:
- * 1. Как организовать структуру компонентов?
- * 2. Где хранить глобальное состояние?
- * 3. Как обрабатывать новые сообщения?
- */
 function App() {
   const { messages, users, hasMore, loading, loadMessages } = useChat();
 
