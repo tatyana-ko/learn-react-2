@@ -1,41 +1,64 @@
-import { useNavigate, useLocation } from 'react-router-dom';
-import { useCallback, useEffect } from 'react';
+import { useNavigate, useLocation } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+
+const fetchCourses = () => ["course-1", "course-2", "course-3", "course-4"];
 
 interface NavigationState {
   from?: string;
-  data?: any;
+  data?: {
+    key?: string,
+    prefetch?: boolean,
+  };
 }
-
-/**
- * 🧭 Хук для умной навигации
- * 
- * Подумайте:
- * 
- * 1. Состояние:
- *    - Что сохранять при переходе?
- *    - Как восстанавливать данные?
- *    - Когда очищать историю?
- * 
- * 2. Безопасность:
- *    - Как проверять права?
- *    - Что делать с приватными данными?
- *    - Как защитить от атак?
- * 
- * 3. Оптимизация:
- *    - Когда начинать предзагрузку?
- *    - Как кешировать маршруты?
- *    - Что делать с большими данными?
- * 
- * 💡 Подсказка:
- * Представьте, что вы создаете GPS-навигатор.
- * Как бы вы спланировали маршрут,
- * учитывая пробки, ремонты и предпочтения?
- */
 export function useSmartNavigation() {
-  // Реализуйте хук
+  const queryClient = useQueryClient();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [canGoBack, setCanGoBack] = useState<boolean>(false);
+
+  useEffect(() => {
+    setCanGoBack(location.pathname !== "/");
+  }, [location.pathname]);
+
+  const hasPermission = (key: string) => {
+    //check token?
+    const accessKey = "22";
+
+    return key === accessKey;
+  };
+
+  const smartNavigate = (to: string, options?: { state?: NavigationState }) => {
+    if (options?.state?.data) {
+      const { key, prefetch } = options.state.data;
+
+      if (key && !hasPermission(key)) return;
+      //navigate("/sign-in")
+
+      if (prefetch) {
+        queryClient.prefetchQuery({
+          queryKey: ["courses"],
+          queryFn: fetchCourses,
+        });
+      }
+
+      navigate(to as string);
+    } else {
+      navigate(to as string);
+    }
+  };
+
+  const goBack = () => {
+    if (!canGoBack) {
+      return;
+    }
+
+    navigate(-1);
+  };
+
   return {
-    navigate: (to: string, options?: { state?: NavigationState }) => {},
-    goBack: () => {},
-    canGoBack: false
+    navigate: smartNavigate,
+    goBack,
+    canGoBack,
   };
 }

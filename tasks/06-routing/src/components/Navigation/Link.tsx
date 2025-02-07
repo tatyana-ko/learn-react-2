@@ -1,36 +1,12 @@
 import React from 'react';
 import { Link as RouterLink, LinkProps } from 'react-router-dom';
+import { useSmartNavigation } from "../../hooks/useNavigation";
 
 interface SmartLinkProps extends LinkProps {
   prefetch?: boolean;
   guard?: boolean;
 }
 
-/**
- * 🔗 Умный компонент ссылки
- * 
- * Подумайте:
- * 
- * 1. Предзагрузка:
- *    - Когда начинать загрузку?
- *    - Что загружать первым?
- *    - Как не перегрузить сеть?
- * 
- * 2. Защита:
- *    - Как проверять доступ?
- *    - Что делать при отказе?
- *    - Как сохранить состояние?
- * 
- * 3. UX:
- *    - Как показать состояние?
- *    - Что делать при ошибках?
- *    - Как сделать доступным?
- * 
- * 💡 Подсказка:
- * Представьте, что вы создаете систему указателей.
- * Как бы вы помогли пользователю найти путь,
- * предупредив о возможных препятствиях?
- */
 export const SmartLink: React.FC<SmartLinkProps> = ({
   to,
   prefetch,
@@ -38,6 +14,21 @@ export const SmartLink: React.FC<SmartLinkProps> = ({
   children,
   ...props
 }) => {
-  // Реализуйте компонент
-  return null;
+  const { navigate } = useSmartNavigation();
+ 
+  const handleClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+
+    if (guard) {
+      navigate(to as string, { state: { data: { key: "22" } } });
+    } else if (prefetch) {
+      navigate(to as string, { state: { data: { prefetch } } });
+    } else {
+      navigate(to as string)
+    }
+  };
+
+  return <RouterLink to={to} {...props} onClick={handleClick}>
+    {children}
+  </RouterLink>;
 };
