@@ -1,76 +1,118 @@
 import React, { useCallback, useState } from 'react';
 import type { DropZoneProps } from '../types';
+import { useFileUpload } from '../hooks/useFileUpload';
 
-/**
- * Компонент для drag & drop загрузки файлов
- * 
- * Подумайте:
- * 1. Какие события необходимо обработать?
- * 2. Как предотвратить стандартное поведение браузера?
- * 3. Как показать пользователю, что файл можно бросить?
- */
 export const DropZone: React.FC<DropZoneProps> = ({
   onFilesAccepted,
   maxFiles = Infinity,
   maxSize = Infinity,
-  accept = [],
-  disabled = false
+  accept = []
 }) => {
-  // Изучите: почему мы используем два состояния для drag & drop?
+  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   const [isDragActive, setIsDragActive] = useState(false);
   const [isDragReject, setIsDragReject] = useState(false);
+  const { state, upload, cancel } = useFileUpload();
 
-  /**
-   * Обработчик drag событий
-   * 
-   * Подумайте:
-   * 1. Почему важен порядок событий?
-   * 2. Как обрабатывать вложенные drop-зоны?
-   * 3. Когда проверять типы файлов?
-   */
-  const handleDrag = useCallback((e: React.DragEvent) => {
-    // Изучите: как работает e.preventDefault() и e.stopPropagation()?
-  }, []);
-
-  /**
-   * Валидация файлов
-   * 
-   * Подумайте:
-   * 1. Какие проверки нужно сделать?
-   * 2. Как обрабатывать папки?
-   * 3. Когда показывать ошибки пользователю?
-   */
   const validateFiles = useCallback((files: FileList | File[]): File[] => {
-    // Изучите: как работать с FileList и File API?
-    return [];
+    const valid: File[] = [];
+
+    if (files.length > maxFiles) {
+      alert("Maximum number of files - 5");
+      return valid;
+    }
+
+    for (const file of files) {
+      if (file.size > maxSize) {
+        alert("Too big size");
+        continue;
+      }
+
+      if (accept.length > 0 && !accept.includes(file.type)) {
+        alert("Not valid type");
+        continue;
+      }
+
+      valid.push(file);
+    }
+
+    return valid;
   }, [maxFiles, maxSize, accept]);
 
-  /**
-   * Обработчик drop события
-   * 
-   * Подумайте:
-   * 1. Как получить список файлов из события?
-   * 2. Когда создавать превью?
-   * 3. Как обрабатывать множество файлов?
-   */
+  const handleDrag = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+
+    switch (e.type) {
+      case "dragover":
+      case "dragenter":
+        setIsDragActive(true);
+        break;
+
+      case "dragleave":
+        //как проверить, что курсор пересекает именно границу контейнера?
+        setIsDragActive(false);
+        break;
+
+      default:
+        break;
+    }
+  }, []);
+
   const handleDrop = useCallback((e: React.DragEvent) => {
-    // Изучите: как работает DataTransfer API?
-  }, [onFilesAccepted, validateFiles]);
+    e.preventDefault();
+    setIsDragActive(false);
+
+    const droppedFiles = e.dataTransfer.files;
+    const validatedFiles = validateFiles(Array.from(droppedFiles));
+
+    if (validatedFiles.length > 0 && (uploadedFiles.length + validatedFiles.length <= maxFiles)) {
+      setUploadedFiles(prevState => [...prevState, ...validatedFiles]);
+    }
+  }, [maxFiles, uploadedFiles.length, validateFiles]);
+
+  const handleUpload = () => {
+    uploadedFiles.forEach(upload);
+    onFilesAccepted(uploadedFiles);
+  };
+
+  const handleDeleteFile = (name: string) => {
+    setUploadedFiles(prevState => prevState.filter(file => file.name !== name))
+  };
 
   return (
-    <div
-      className={`dropzone ${isDragActive ? 'active' : ''} ${isDragReject ? 'reject' : ''}`}
-      onDragEnter={handleDrag}
-      onDragOver={handleDrag}
-      onDragLeave={handleDrag}
-      onDrop={handleDrop}
-    >
-      {/* 
-        Подумайте:
-        1. Как сделать drop-зону доступной с клавиатуры?
-        2. Какие aria-атрибуты нужно добавить?
-        3. Как показать различные состояния?
-      */}
-    </div>
+    <>
+      <div className='progress-bar'>
+        <p>{state.progress}</p>
+        <div className="progress-bar-fill" style={{ width: `${state.progress}%` }}></div>
+      </div>
+      <div
+        className={`dropzone ${isDragActive ? 'active' : ''} ${isDragReject ? 'reject' : ''}`}
+        aria-label='Drag and drop zone'
+        onDragEnter={handleDrag}
+        onDragOver={handleDrag}
+        onDragLeave={handleDrag}
+        onDrop={handleDrop}
+      >
+        <span>drag and drop files here</span>
+      </div>
+
+      <ul>
+        {uploadedFiles.map((file, i) => (
+          <li key={i}>
+            <p>{file.name}</p>
+            <button className='delete' onClick={() => handleDeleteFile(file.name)}></button>
+          </li>
+        ))}
+      </ul>
+
+      {uploadedFiles.length > 0 &&
+        (state.error
+          ? <button onClick={handleUpload} disabled={state.isUploading}>Try again</button>
+          : <button onClick={handleUpload} disabled={state.isUploading}>Upload</button>
+        )
+      }
+      {uploadedFiles.length > 0 && <button disabled={!state.isUploading} onClick={() => cancel()}>Cancel</button>}
+
+      {state?.error && <p className="error">Failed</p>}
+    </>
   );
 };

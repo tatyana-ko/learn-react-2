@@ -34,6 +34,8 @@ export const DropZone: React.FC<Props> = ({
   onDrop,
   accept
 }) => {
-  // Реализуйте компонент
-  return null;
+  
+  return <>
+    
+  </>;
 };
